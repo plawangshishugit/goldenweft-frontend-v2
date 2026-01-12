@@ -38,3 +38,20 @@ body {
 .font-sans {
   font-family: var(--font-inter);
 }
+
+.checkout-input {
+  width: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 9999px;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.checkout-textarea {
+  width: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  min-height: 80px;
+}

@@ -1,0 +1,52 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Saree {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  region      String
+  imageUrl    String
+  reason      String
+  fabric      String
+  weave       String
+  feel        String
+  weight      String
+  occasions   String[]
+  price       Int
+
+  // 👇 Internal intelligence fields (NOT user-facing)
+  borderWeight String
+  drape        String
+  colorTone    String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            String   @id @default(uuid())
+
+  sareeSlug     String
+  sareeName     String
+  amount        Int      // in INR
+
+  customerName  String
+  phone         String
+  address       String
+
+  status        String   // created | paid | failed
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
