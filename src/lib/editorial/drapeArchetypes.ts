@@ -29,7 +29,7 @@ export const DRAPE_ARCHETYPES = [
   {
     key: "minimal-balanced" as const,
     title: "Minimal & Balanced",
-    image: "/drape/minimal-balanced/minimal-balanced-1.jpg",
+    image: "/drape/minimal-balanced.png",
     description:
       "Keeps every element subtle and in proportion, creating a quiet, modern balance that adapts across occasions.",
   },

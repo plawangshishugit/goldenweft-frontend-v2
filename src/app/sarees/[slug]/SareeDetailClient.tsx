@@ -15,6 +15,7 @@ import { buildPersonalizedReason } from "../../../lib/personalization/buildReaso
 import { loadPersona } from "../../../lib/studio/persona.storage";
 import { Persona } from "../../../lib/studio/persona.types";
 import { mapFeaturesToArchetypes } from "../../../lib/personalization/mapFeaturesToArchetypes";
+import { DrapeArchetype } from "../../../lib/drape/drape.types";
 
 type TrialFeatures = {
   silhouetteType: "balanced" | "vertical" | "petite";
@@ -30,17 +31,26 @@ type ArchetypeKey =
   | "minimal-balanced";
 
 type Saree = {
+  id: string;
   slug: string;
   name: string;
   region: string;
+
   imageUrl: string;
+  heroImage: string;
+
   reason: string;
+  baseReason: string;
+
   fabric: string;
   weave: string;
   feel: string;
   weight: string;
   occasions: string[];
+
   price: number;
+  stock: number;
+  isActive: boolean;
 };
 
 export default function SareeDetailClient({
@@ -55,6 +65,7 @@ export default function SareeDetailClient({
   const [notFound, setNotFound] = useState(false);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [archetypes, setArchetypes] = useState<DrapeArchetype[]>([]);
   const [preferredArchetypes, setPreferredArchetypes] =
     useState<ArchetypeKey[]>([]);
 
@@ -67,6 +78,7 @@ export default function SareeDetailClient({
         const storedPersona = loadPersona();
         if (isMounted) setPersona(storedPersona);
 
+        // 1️⃣ Fetch saree
         const res = await fetch(`/api/sarees/${slug}`);
         if (res.status === 404) {
           if (isMounted) setNotFound(true);
@@ -75,6 +87,14 @@ export default function SareeDetailClient({
 
         const data: Saree = await res.json();
 
+        // 2️⃣ Fetch drape archetypes (AFTER saree exists)
+        const archetypeRes = await fetch("/api/drape-archetypes");
+        if (archetypeRes.ok) {
+          const all: DrapeArchetype[] = await archetypeRes.json();
+          if (isMounted) setArchetypes(all);
+        }
+
+        // 3️⃣ Trial features
         let trialFeatures: TrialFeatures | null = null;
         try {
           const cookieRes = await fetch("/api/trial/session/read");
@@ -84,18 +104,19 @@ export default function SareeDetailClient({
           }
         } catch {}
 
+        // 4️⃣ Personalization
         const finalReason = buildPersonalizedReason(
-          { defaultReason: data.reason },
+          { defaultReason: data.baseReason  },
           trialFeatures
         );
 
-        const archetypes = mapFeaturesToArchetypes(trialFeatures);
+        const preferred = mapFeaturesToArchetypes(trialFeatures);
 
         if (isMounted) {
           setSaree(data);
           setReason(finalReason);
           setIsPersonalized(finalReason !== data.reason);
-          setPreferredArchetypes(archetypes);
+          setPreferredArchetypes(preferred);
         }
       } catch {
         if (isMounted) setNotFound(true);
@@ -144,16 +165,16 @@ export default function SareeDetailClient({
         <SareeHero
           name={saree.name}
           region={saree.region}
-          imageUrl={saree.imageUrl}
+          imageUrl={saree.heroImage}
         />
-
         <section className="space-y-2">
           <WhyChosen reason={reason} />
           {isPersonalized && <ClearPersonalization />}
 
           <section aria-label="Styling and drape references">
             <DrapeArchetypeGrid
-              preferredArchetypes={preferredArchetypes}
+              archetypes={archetypes}
+              preferredKeys={preferredArchetypes}
             />
           </section>
         </section>
@@ -175,33 +196,43 @@ export default function SareeDetailClient({
           </p>
         </section>
 
-        <button
-          disabled={adding}
-          onClick={() => {
-            setAdding(true);
+        {/* Stock & availability guard */}
+        {!saree.isActive ? (
+          <p className="text-sm text-gray-600 italic text-center">
+            This saree is currently unavailable.
+          </p>
+        ) : saree.stock === 0 ? (
+          <p className="text-sm text-gray-600 italic text-center">
+            Currently out of stock.
+          </p>
+        ) : (
+            <button
+              disabled={adding}
+              onClick={() => {
+                setAdding(true);
 
-            sessionStorage.setItem(
-              "gw_checkout_saree",
-              JSON.stringify({
-                slug: saree.slug,
-                name: saree.name,
-                price: saree.price,
-              })
-            );
+                sessionStorage.setItem(
+                  "gw_checkout_saree",
+                  JSON.stringify({
+                    slug: saree.slug,
+                    name: saree.name,
+                    price: saree.price,
+                  })
+                );
 
-            setTimeout(() => {
-              window.location.href = "/checkout";
-            }, 400);
-          }}
-          className={`w-full rounded-full border py-4 font-sans text-sm transition-all
-            ${adding
-              ? "bg-gray-900 text-white cursor-wait"
-              : "border-gray-900 hover:bg-gray-900 hover:text-white"
-            }`}
-        >
-          {adding ? "Adding to your collection…" : "Add to My Collection"}
-        </button>
-
+                setTimeout(() => {
+                  window.location.href = "/checkout";
+                }, 400);
+              }}
+              className={`w-full rounded-full border py-4 font-sans text-sm transition-all
+                ${adding
+                  ? "bg-gray-900 text-white cursor-wait"
+                  : "border-gray-900 hover:bg-gray-900 hover:text-white"
+                }`}
+            >
+              {adding ? "Reserving this saree…" : "Add to My Collection"}
+            </button>
+        )}
         <CareNote />
         <PackagingNote />
         <TrustSection />

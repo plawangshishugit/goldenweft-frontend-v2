@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  const formData = await req.formData();
+  const email = String(formData.get("email"));
+  const password = String(formData.get("password"));
+
+  const origin = req.headers.get("origin") || "http://localhost:3000";
 
   if (email !== process.env.ADMIN_EMAIL) {
-    return NextResponse.json({}, { status: 401 });
+    return NextResponse.redirect(`${origin}/admin/login`);
   }
 
   const valid = await bcrypt.compare(
@@ -15,20 +19,23 @@ export async function POST(req: Request) {
   );
 
   if (!valid) {
-    return NextResponse.json({}, { status: 401 });
+    return NextResponse.redirect(`${origin}/admin/login`);
   }
 
   const token = jwt.sign(
     { role: "admin" },
     process.env.ADMIN_JWT_SECRET!,
-    { expiresIn: "12h" }
+    { expiresIn: "7d" }
   );
 
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set("gw_admin", token, {
+  const res = NextResponse.redirect(`${origin}/admin/orders`);
+
+  res.cookies.set({
+    name: "admin_token",
+    value: token,
     httpOnly: true,
-    secure: true,
-    sameSite: "strict",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
   });
 

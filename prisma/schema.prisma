@@ -10,43 +10,70 @@ datasource db {
 }
 
 model Saree {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  region      String
-  imageUrl    String
-  reason      String
-  fabric      String
-  weave       String
-  feel        String
-  weight      String
-  occasions   String[]
-  price       Int
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  region       String
 
-  // 👇 Internal intelligence fields (NOT user-facing)
-  borderWeight String
-  drape        String
-  colorTone    String
+  imageUrl     String
+  heroImage  String   @default("")
+  gallery    String[] @default([])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  baseReason String   @default("")
+  reason       String
+
+  fabric       String
+  weave        String
+  feel         String
+  weight       String
+  occasions    String[]
+
+  price        Int
+
+  // Inventory & control
+  stock        Int       @default(0)
+  isActive     Boolean   @default(true)
+
+  // Soft attributes (ranking / personalization)
+  borderWeight String    // "light" | "medium"
+  drape        String    // "soft" | "structured"
+  colorTone    String    // "warm" | "neutral" | "cool"
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Order {
-  id            String   @id @default(uuid())
+  id                String   @id @default(uuid())
 
-  sareeSlug     String
-  sareeName     String
-  amount        Int      // in INR
+  sareeId   String @default("")
+  sareeSlug          String
+  sareeName          String
 
-  customerName  String
-  phone         String
-  address       String
+  quantity           Int      @default(1)
+  amount             Int      // INR (total)
 
-  status        String   // created | paid | failed
-  razorpayOrderId   String?
-  razorpayPaymentId String?
+  customerName       String
+  phone              String
+  address            String
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status             String   // created | paid | failed
+  failureReason      String?
+
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model DrapeArchetype {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  title       String
+  description String
+  imageUrl    String
+  priority    Int      @default(0)
+
+  createdAt   DateTime @default(now())
 }

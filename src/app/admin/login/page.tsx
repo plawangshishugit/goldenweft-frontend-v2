@@ -1,55 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function AdminLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export default function AdminLoginPage() {
+  const router = useRouter();
 
-  async function submit() {
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+  useEffect(() => {
+    fetch("/api/admin/me").then((res) => {
+      if (res.ok) {
+        router.replace("/admin/orders");
+      }
     });
-
-    if (res.ok) {
-      window.location.href = "/admin/orders";
-    } else {
-      setError("Invalid credentials");
-    }
-  }
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#F7F5F2]">
-      <div className="bg-white p-8 rounded-2xl border max-w-sm space-y-4">
-        <h1 className="font-serif text-2xl">Admin Login</h1>
+      <form
+        action="/api/admin/login"
+        method="POST"
+        className="bg-white border rounded-xl p-6 w-full max-w-sm space-y-4"
+      >
+        <h1 className="font-serif text-xl text-center">Admin Login</h1>
 
         <input
-          className="checkout-input"
+          type="email"
+          name="email"
           placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full border rounded px-3 py-2 text-sm"
         />
 
         <input
-          className="checkout-input"
           type="password"
+          name="password"
           placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full border rounded px-3 py-2 text-sm"
         />
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
-          onClick={submit}
-          className="w-full rounded-full border py-3 hover:bg-gray-900 hover:text-white transition"
+          type="submit"
+          className="w-full rounded-full border border-gray-900 py-2 text-sm hover:bg-gray-900 hover:text-white transition"
         >
-          Login
+          Sign in
         </button>
-      </div>
+      </form>
     </main>
   );
 }

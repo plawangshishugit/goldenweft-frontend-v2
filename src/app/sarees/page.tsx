@@ -18,8 +18,11 @@ type Saree = {
   name: string;
   region: string;
   imageUrl: string;
+  heroImage: string;
   reason: string;
-
+  stock: number;        
+  isActive: boolean;
+  price: number;
   // soft attributes for ranking only
   borderWeight?: "light" | "medium";
   drape?: "soft" | "structured";
@@ -50,7 +53,10 @@ useEffect(() => {
 
   load();
 }, []);
-
+// Filter out non-sellable sarees
+const visibleSarees = sarees.filter(
+  (s) => s.isActive && s.stock > 0
+);
 
   return (
     <main className="min-h-screen bg-[#F7F5F2] px-6 py-12">
@@ -70,7 +76,7 @@ useEffect(() => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sarees.map((s) => (
+          {visibleSarees.map((s) => (
             <SareeCard
               key={s.id}
               name={s.name}

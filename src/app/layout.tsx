@@ -73,9 +73,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
         {children}
-        <p className="text-xs text-gray-400 text-center py-6">
-          Crafted with care • Priced fairly • No mass production
-        </p>
+
       </body>
     </html>
   );

@@ -9,35 +9,57 @@ const razorpay = new Razorpay({
 
 export async function POST(req: Request) {
   try {
-    const { orderId, amount } = await req.json();
+    const { orderId } = await req.json();
 
-    if (!orderId || !amount) {
+    if (!orderId) {
       return NextResponse.json(
-        { error: "orderId or amount missing" },
+        { error: "orderId missing" },
         { status: 400 }
       );
     }
 
-    const rpOrder = await razorpay.orders.create({
-      amount: amount * 100,
-      currency: "INR",
-      receipt: orderId,
+    // 1️⃣ Fetch order from DB (SOURCE OF TRUTH)
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
     });
 
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    if (order.status !== "created") {
+      return NextResponse.json(
+        { error: "Order already processed" },
+        { status: 400 }
+      );
+    }
+
+    // 2️⃣ Create Razorpay order (amount from DB)
+    const rpOrder = await razorpay.orders.create({
+      amount: order.amount * 100, // INR → paise
+      currency: "INR",
+      receipt: order.id,
+    });
+
+    // 3️⃣ Update DB with Razorpay order ID
     await prisma.order.update({
-      where: { id: orderId },
+      where: { id: order.id },
       data: {
         razorpayOrderId: rpOrder.id,
-        status: "created",
+        status: "pending",
       },
     });
 
+    // 4️⃣ Send only required info to frontend
     return NextResponse.json({
-      id: rpOrder.id,
+      razorpayOrderId: rpOrder.id,
       amount: rpOrder.amount,
       currency: rpOrder.currency,
-      receipt: rpOrder.receipt,
     });
+
   } catch (error) {
     console.error("Create Razorpay order error:", error);
     return NextResponse.json(

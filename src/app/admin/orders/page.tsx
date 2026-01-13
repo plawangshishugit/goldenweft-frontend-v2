@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import CopyAddressButton from "@/components/admin/CopyAddressButton";
-import MarkDispatchedButton from "@/components/admin/MarkDispatchedButton";
+// import CopyAddressButton from "@/components/admin/CopyAddressButton";
+// import MarkDispatchedButton from "@/components/admin/MarkDispatchedButton";
 
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
@@ -71,7 +71,7 @@ export default async function AdminOrdersPage() {
                     >
                       {o.status}
                     </span>
-                    {o.status === "paid" && <MarkDispatchedButton orderId={o.id} />}
+                    {/* {o.status === "paid" && <MarkDispatchedButton orderId={o.id} />} */}
                   </td>
 
                   <td>₹{o.amount.toLocaleString("en-IN")}</td>
@@ -83,7 +83,7 @@ export default async function AdminOrdersPage() {
                   </td>
 
                   <td>
-                    <CopyAddressButton address={o.address} />
+                    {/* <CopyAddressButton address={o.address} /> */}
                   </td>
                 </tr>
               ))}
@@ -94,3 +94,11 @@ export default async function AdminOrdersPage() {
     </main>
   );
 }
+// export default function AdminOrdersPage() {
+//   return (
+//     <main style={{ padding: 40 }}>
+//       <h1>Admin Orders</h1>
+//       <p>If you can see this page, routing works.</p>
+//     </main>
+//   );
+// }

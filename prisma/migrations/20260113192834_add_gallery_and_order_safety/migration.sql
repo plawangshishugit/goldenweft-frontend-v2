@@ -1,0 +1,14 @@
+-- AlterTable
+ALTER TABLE "DrapeArchetype" ADD COLUMN     "priority" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN     "failureReason" TEXT,
+ADD COLUMN     "quantity" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "sareeId" TEXT NOT NULL DEFAULT '';
+
+-- AlterTable
+ALTER TABLE "Saree" ADD COLUMN     "baseReason" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "gallery" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "heroImage" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "isActive" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "stock" INTEGER NOT NULL DEFAULT 0;

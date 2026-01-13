@@ -5,7 +5,7 @@ export const DUMMY_SAREES = [
     slug: "bhagalpuri-tussar-silk-natural",
     name: "Bhagalpuri Tussar Silk",
     region: "Bhagalpur, Bihar",
-    imageUrl: "/sarees/bhagalpuri-tussar.jpg",
+    imageUrl: "/sarees/bhagalpuri-tussar-silk.png",
 
     reason:
       "Chosen for its soft fall and breathable comfort, ideal for composed gatherings and long rituals.",
@@ -29,7 +29,7 @@ export const DUMMY_SAREES = [
     slug: "banarasi-katan-silk-classic",
     name: "Banarasi Katan Silk",
     region: "Varanasi, Uttar Pradesh",
-    imageUrl: "/sarees/banarasi-katan.jpg",
+    imageUrl: "/sarees/banarasi-katan-silk-classic.png",
 
     reason:
       "Selected for its structured drape and ceremonial presence, suited for traditional occasions.",

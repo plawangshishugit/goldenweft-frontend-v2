@@ -1,18 +1,22 @@
 "use client";
 
-export default function MarkDispatchedButton({ orderId }: { orderId: string }) {
+export default function MarkDispatchedButton({
+  orderId,
+}: {
+  orderId: string;
+}) {
   async function mark() {
-    await fetch("/api/admin/mark-dispatched", {
+    await fetch("/api/admin/orders/dispatch", {
       method: "POST",
       body: JSON.stringify({ orderId }),
     });
-    window.location.reload();
+    location.reload();
   }
 
   return (
     <button
       onClick={mark}
-      className="text-xs underline text-blue-700"
+      className="ml-2 text-xs underline text-purple-600"
     >
       Mark dispatched
     </button>
