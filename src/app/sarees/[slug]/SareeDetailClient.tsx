@@ -29,7 +29,11 @@ type ArchetypeKey =
   | "structured-poised"
   | "pallu-forward"
   | "minimal-balanced";
-
+type SareeImage = {
+  id: string;
+  imageUrl: string;
+  position: number;
+};
 type Saree = {
   id: string;
   slug: string;
@@ -38,7 +42,7 @@ type Saree = {
 
   imageUrl: string;
   heroImage: string;
-
+  images: SareeImage[];
   reason: string;
   baseReason: string;
 
@@ -51,6 +55,10 @@ type Saree = {
   price: number;
   stock: number;
   isActive: boolean;
+
+  drape: "soft" | "structured";
+  borderWeight: "light" | "medium";
+  colorTone: "warm" | "neutral" | "cool";
 };
 
 export default function SareeDetailClient({
@@ -167,8 +175,36 @@ export default function SareeDetailClient({
           region={saree.region}
           imageUrl={saree.heroImage}
         />
+        {saree.images.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="font-serif text-xl text-gray-900">Gallery</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {saree.images
+                .sort((a, b) => a.position - b.position)
+                .map((img) => (
+                  <img
+                    key={img.id}
+                    src={img.imageUrl}
+                    alt={`${saree.name} detail`}
+                    loading="lazy"
+                    decoding="async"
+                    className="rounded-xl object-cover"
+                  />
+                ))}
+            </div>
+          </section>
+        )}
         <section className="space-y-2">
-          <WhyChosen reason={reason} />
+          <WhyChosen
+            reason={reason}
+            drapeLabel={
+              saree.drape === "structured"
+                ? "structured, poised"
+                : saree.drape === "soft"
+                ? "soft, flowing"
+                : undefined
+            }
+          />
           {isPersonalized && <ClearPersonalization />}
 
           <section aria-label="Styling and drape references">

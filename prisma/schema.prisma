@@ -38,7 +38,7 @@ model Saree {
   borderWeight String    // "light" | "medium"
   drape        String    // "soft" | "structured"
   colorTone    String    // "warm" | "neutral" | "cool"
-
+  images       SareeImage[]   // ✅ gallery
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -76,4 +76,15 @@ model DrapeArchetype {
   priority    Int      @default(0)
 
   createdAt   DateTime @default(now())
+}
+
+model SareeImage {
+  id        String   @id @default(cuid())
+  sareeId   String
+  imageUrl  String
+  position  Int
+
+  saree     Saree    @relation(fields: [sareeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
