@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CheckoutPreparation from "@/components/checkout/CheckoutPreparation";
+import FinalizingOrder from "./FinalizingOrder";
 
 type CheckoutSaree = {
   slug: string;
@@ -10,22 +12,32 @@ type CheckoutSaree = {
 
 export default function ConfirmOrderPage() {
   const [saree, setSaree] = useState<CheckoutSaree | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("gw_checkout_saree");
-    if (raw) {
-      setSaree(JSON.parse(raw));
-    }
+    // Small delay = intentional ceremony (not technical loading)
+    const timer = setTimeout(() => {
+      const raw = sessionStorage.getItem("gw_checkout_saree");
+      if (raw) {
+        setSaree(JSON.parse(raw));
+      }
+      setLoading(false);
+    }, 700); // 👈 smooth, premium feel
+
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!saree) {
-    return (
-      <main className="min-h-screen flex items-center justify-center text-sm text-gray-600">
-        No order found.
-      </main>
-    );
+  // 1️⃣ While loading → show preparation animation
+  if (loading) {
+    return <CheckoutPreparation />;
   }
 
+  // 2️⃣ After loading, if still no saree → real error
+  if (!saree) {
+    return  <FinalizingOrder />;
+  }
+
+  // 3️⃣ Normal confirm page
   return (
     <main className="min-h-screen bg-[#F7F5F2] px-6 py-12 flex justify-center">
       <section className="w-full max-w-xl bg-white rounded-2xl border border-gray-200 p-8 space-y-6">

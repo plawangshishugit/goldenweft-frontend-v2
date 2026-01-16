@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AddressStep from "./AddressStep";
 import DeliveryStep from "./DeliveryStep";
 import OrderSummary from "./OrderSummary";
+import PreparingSaree from "./PreparingSaree";
 
 type CheckoutSaree = {
   slug: string;
@@ -12,21 +13,27 @@ type CheckoutSaree = {
 };
 
 export default function CheckoutPage() {
-  const [saree, setSaree] = useState<CheckoutSaree | null>(null);
+  const [saree, setSaree] = useState<any>(null);
+  const [hydrating, setHydrating] = useState(true);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("gw_checkout_saree");
-    if (raw) {
-      setSaree(JSON.parse(raw));
-    }
+
+    // Always wait briefly for elegance (even if data exists)
+    setTimeout(() => {
+      if (raw) {
+        setSaree(JSON.parse(raw));
+      }
+      setHydrating(false);
+    }, 900); // intentional pause
   }, []);
 
+  if (hydrating) {
+    return <PreparingSaree />;
+  }
+
   if (!saree) {
-    return (
-      <main className="min-h-screen flex items-center justify-center text-sm text-gray-600">
-        No saree selected for checkout.
-      </main>
-    );
+    return null; // NEVER show "no saree selected"
   }
 
   return (

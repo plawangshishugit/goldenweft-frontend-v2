@@ -9,59 +9,48 @@ const razorpay = new Razorpay({
 
 export async function POST(req: Request) {
   try {
-    const { orderId } = await req.json();
+    const body = await req.json();
+    console.log("🔥 create-order body:", body);
 
-    if (!orderId) {
+    const { orderId, amount } = body;
+
+    if (!orderId || !amount) {
+      console.error("❌ Missing orderId or amount");
       return NextResponse.json(
-        { error: "orderId missing" },
+        { error: "orderId or amount missing" },
         { status: 400 }
       );
     }
+console.log("🔥 create-order body:", { orderId, amount });
 
-    // 1️⃣ Fetch order from DB (SOURCE OF TRUTH)
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
-    }
-
-    if (order.status !== "created") {
-      return NextResponse.json(
-        { error: "Order already processed" },
-        { status: 400 }
-      );
-    }
-
-    // 2️⃣ Create Razorpay order (amount from DB)
+    // 🔹 Create Razorpay order
     const rpOrder = await razorpay.orders.create({
-      amount: order.amount * 100, // INR → paise
+      amount: amount * 100,
       currency: "INR",
-      receipt: order.id,
+      receipt: orderId,
     });
 
-    // 3️⃣ Update DB with Razorpay order ID
-    await prisma.order.update({
-      where: { id: order.id },
+    console.log("✅ Razorpay order created:", rpOrder.id);
+
+    // 🔹 SAVE razorpayOrderId
+    const updated = await prisma.order.update({
+      where: { id: orderId },
       data: {
         razorpayOrderId: rpOrder.id,
-        status: "pending",
       },
     });
 
-    // 4️⃣ Send only required info to frontend
+    console.log("✅ Order updated in DB:", updated.id);
+console.log("✅ Order updated with razorpayOrderId:", orderId);
+
     return NextResponse.json({
-      razorpayOrderId: rpOrder.id,
+      id: rpOrder.id,
       amount: rpOrder.amount,
       currency: rpOrder.currency,
     });
 
-  } catch (error) {
-    console.error("Create Razorpay order error:", error);
+  } catch (err) {
+    console.error("🔥 create-order ERROR:", err);
     return NextResponse.json(
       { error: "Failed to create Razorpay order" },
       { status: 500 }

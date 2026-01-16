@@ -1,3 +1,5 @@
+import CopyAddressButton from "@/components/admin/CopyAddressButton";
+import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import { prisma } from "@/lib/prisma";
 // import CopyAddressButton from "@/components/admin/CopyAddressButton";
 // import MarkDispatchedButton from "@/components/admin/MarkDispatchedButton";
@@ -23,14 +25,14 @@ export default async function AdminOrdersPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left">
               <tr>
-                <th className="p-4">Order ID</th>
+                <th>Status</th>
+                <th>Amount</th>
                 <th>Saree</th>
                 <th>Customer</th>
                 <th>Phone</th>
-                <th>Status</th>
-                <th>Amount</th>
                 <th>Date</th>
                 <th>Address</th>
+                <th>Order ID</th>
               </tr>
             </thead>
 
@@ -63,17 +65,21 @@ export default async function AdminOrdersPage() {
                   </td>
                   <td>
                     <span
-                      className={`px-2 py-1 rounded text-xs ${
+                      className={`block w-fit px-2 py-1 rounded text-xs mb-1 ${
                         o.status === "paid"
                           ? "bg-green-100 text-green-800"
+                          : o.status === "dispatched"
+                          ? "bg-blue-100 text-blue-800"
+                          : o.status === "delivered"
+                          ? "bg-gray-200 text-gray-800"
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {o.status}
                     </span>
-                    {/* {o.status === "paid" && <MarkDispatchedButton orderId={o.id} />} */}
-                  </td>
 
+                    <OrderStatusSelect orderId={o.id} status={o.status} />
+                  </td>
                   <td>₹{o.amount.toLocaleString("en-IN")}</td>
 
                   <td>
@@ -83,8 +89,8 @@ export default async function AdminOrdersPage() {
                   </td>
 
                   <td>
-                    {/* <CopyAddressButton address={o.address} /> */}
-                  </td>
+                    <CopyAddressButton address={o.address} />
+                  </td>                   
                 </tr>
               ))}
             </tbody>

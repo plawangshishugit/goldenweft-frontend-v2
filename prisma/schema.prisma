@@ -8,7 +8,12 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
+enum OrderStatus {
+  created
+  paid
+  dispatched
+  delivered
+}
 model Saree {
   id           String   @id @default(cuid())
   slug         String   @unique
@@ -57,7 +62,7 @@ model Order {
   phone              String
   address            String
 
-  status             String   // created | paid | failed
+  status             OrderStatus @default(created)
   failureReason      String?
 
   razorpayOrderId    String?
