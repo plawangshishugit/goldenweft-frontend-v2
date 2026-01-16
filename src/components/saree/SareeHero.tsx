@@ -15,7 +15,7 @@ export default function SareeHero({
   return (
     <section className="space-y-4">
       {/* Image */}
-      <div className="w-full overflow-hidden rounded-2xl bg-gray-100">
+      <div className="w-full overflow-hidden rounded-3xl mb-6 bg-gray-100">
         <img
           src={imageUrl}
           alt={name}

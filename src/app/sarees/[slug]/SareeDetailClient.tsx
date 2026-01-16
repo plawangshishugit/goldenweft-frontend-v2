@@ -1,152 +1,91 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import SareeSkeleton from "../../../components/skeletons/SareeSkeleton";
 import SareeHero from "../../../components/saree/SareeHero";
-import WhyChosen from "../../../components/saree/WhyChosen";
 import SareeDetails from "../../../components/saree/SareeDetails";
 import CareNote from "../../../components/saree/CareNote";
 import PackagingNote from "../../../components/saree/PackagingNote";
 import TrustSection from "../../../components/saree/TrustSection";
-import ClearPersonalization from "../../../components/saree/ClearPersonalization";
-import DrapeArchetypeGrid from "../../../components/drape/DrapeArchetypeGrid";
+import SareeGallery from "../../../components/saree/SareeGallery";
 
 import { buildPersonalizedReason } from "../../../lib/personalization/buildReason";
 import { loadPersona } from "../../../lib/studio/persona.storage";
-import { Persona } from "../../../lib/studio/persona.types";
 import { mapFeaturesToArchetypes } from "../../../lib/personalization/mapFeaturesToArchetypes";
 import { DrapeArchetype } from "../../../lib/drape/drape.types";
 
-type TrialFeatures = {
-  silhouetteType: "balanced" | "vertical" | "petite";
-  borderTolerance: "light" | "medium";
-  colorProfile: "warm" | "neutral" | "cool";
-  postureType: "upright" | "relaxed";
-};
+import {
+  Saree,
+  TrialFeatures,
+  ArchetypeKey,
+} from "./types";
 
-type ArchetypeKey =
-  | "soft-flowing"
-  | "structured-poised"
-  | "pallu-forward"
-  | "minimal-balanced";
-type SareeImage = {
-  id: string;
-  imageUrl: string;
-  position: number;
-};
-type Saree = {
-  id: string;
-  slug: string;
-  name: string;
-  region: string;
+import SareePurchase from "./sections/SareePurchase";
+import SareePersonalization from "./sections/SareePersonalization";
 
-  imageUrl: string;
-  heroImage: string;
-  images: SareeImage[];
-  reason: string;
-  baseReason: string;
-
-  fabric: string;
-  weave: string;
-  feel: string;
-  weight: string;
-  occasions: string[];
-
-  price: number;
-  stock: number;
-  isActive: boolean;
-
-  drape: "soft" | "structured";
-  borderWeight: "light" | "medium";
-  colorTone: "warm" | "neutral" | "cool";
-};
-
-export default function SareeDetailClient({
-  slug,
-}: {
-  slug: string;
-}) {
-  const [persona, setPersona] = useState<Persona | null>(null);
+export default function SareeDetailClient({ slug }: { slug: string }) {
   const [saree, setSaree] = useState<Saree | null>(null);
   const [reason, setReason] = useState("");
+  const [isPersonalized, setIsPersonalized] = useState(false);
+  const [archetypes, setArchetypes] = useState<DrapeArchetype[]>([]);
+  const [preferred, setPreferred] = useState<ArchetypeKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [isPersonalized, setIsPersonalized] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [archetypes, setArchetypes] = useState<DrapeArchetype[]>([]);
-  const [preferredArchetypes, setPreferredArchetypes] =
-    useState<ArchetypeKey[]>([]);
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    async function loadData() {
+    async function load() {
       try {
-        // Persona (reserved)
-        const storedPersona = loadPersona();
-        if (isMounted) setPersona(storedPersona);
+        loadPersona(); // reserved
 
-        // 1️⃣ Fetch saree
         const res = await fetch(`/api/sarees/${slug}`);
         if (res.status === 404) {
-          if (isMounted) setNotFound(true);
+          if (mounted) setNotFound(true);
           return;
         }
 
         const data: Saree = await res.json();
 
-        // 2️⃣ Fetch drape archetypes (AFTER saree exists)
-        const archetypeRes = await fetch("/api/drape-archetypes");
-        if (archetypeRes.ok) {
-          const all: DrapeArchetype[] = await archetypeRes.json();
-          if (isMounted) setArchetypes(all);
-        }
+        if (!mounted) return;
 
-        // 3️⃣ Trial features
-        let trialFeatures: TrialFeatures | null = null;
-        try {
-          const cookieRes = await fetch("/api/trial/session/read");
-          if (cookieRes.ok) {
-            const json = await cookieRes.json();
-            trialFeatures = json.features ?? null;
-          }
-        } catch {}
+        setSaree(data);
 
-        // 4️⃣ Personalization
-        const finalReason = buildPersonalizedReason(
-          { defaultReason: data.baseReason  },
-          trialFeatures
-        );
+        // fire-and-forget extras (non-blocking)
+        fetch("/api/drape-archetypes")
+          .then(r => r.json())
+          .then(setArchetypes)
+          .catch(() => {});
 
-        const preferred = mapFeaturesToArchetypes(trialFeatures);
+        fetch("/api/trial/session/read")
+          .then(r => r.ok ? r.json() : null)
+          .then(json => {
+            const features = json?.features ?? null;
+            const finalReason = buildPersonalizedReason(
+              { defaultReason: data.baseReason },
+              features
+            );
 
-        if (isMounted) {
-          setSaree(data);
-          setReason(finalReason);
-          setIsPersonalized(finalReason !== data.reason);
-          setPreferredArchetypes(preferred);
-        }
+            setReason(finalReason);
+            setIsPersonalized(finalReason !== data.reason);
+            setPreferred(mapFeaturesToArchetypes(features));
+          })
+          .catch(() => {});
       } catch {
-        if (isMounted) setNotFound(true);
+        if (mounted) setNotFound(true);
       } finally {
-        if (isMounted) setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
-    loadData();
+    load();
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [slug]);
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F7F5F2] px-6 py-12 flex justify-center">
-        <div className="w-full max-w-2xl font-sans text-sm text-gray-600">
-          Loading saree details…
-        </div>
-      </main>
-    );
+    return <SareeSkeleton />;
   }
 
   if (notFound || !saree) {
@@ -157,7 +96,7 @@ export default function SareeDetailClient({
             This saree could not be found
           </h1>
           <p className="font-sans text-sm text-gray-600">
-            It may have been moved or is no longer part of the current collection.
+            It may have been moved or is no longer part of the collection.
           </p>
         </div>
       </main>
@@ -166,112 +105,39 @@ export default function SareeDetailClient({
 
   return (
     <main className="min-h-screen bg-[#F7F5F2] px-6 py-12 flex justify-center">
-      <article
-        aria-label={`Saree details for ${saree.name}`}
-        className="w-full max-w-2xl space-y-10"
-      >
+      <article className="w-full max-w-2xl space-y-10">
+        <div className="fade-up"></div>
         <SareeHero
           name={saree.name}
           region={saree.region}
           imageUrl={saree.heroImage}
         />
-        {saree.images.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="font-serif text-xl text-gray-900">Gallery</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {saree.images
-                .sort((a, b) => a.position - b.position)
-                .map((img) => (
-                  <img
-                    key={img.id}
-                    src={img.imageUrl}
-                    alt={`${saree.name} detail`}
-                    loading="lazy"
-                    decoding="async"
-                    className="rounded-xl object-cover"
-                  />
-                ))}
-            </div>
-          </section>
-        )}
-        <section className="space-y-2">
-          <WhyChosen
-            reason={reason}
-            drapeLabel={
-              saree.drape === "structured"
-                ? "structured, poised"
-                : saree.drape === "soft"
-                ? "soft, flowing"
-                : undefined
-            }
+        <div className="fade-up fade-delay-1">
+          <SareeGallery
+            images={[...saree.images].sort((a, b) => a.position - b.position)}
+            sareeName={saree.name}
           />
-          {isPersonalized && <ClearPersonalization />}
-
-          <section aria-label="Styling and drape references">
-            <DrapeArchetypeGrid
-              archetypes={archetypes}
-              preferredKeys={preferredArchetypes}
-            />
-          </section>
-        </section>
-
-        <SareeDetails
-          fabric={saree.fabric}
-          weave={saree.weave}
-          feel={saree.feel}
-          weight={saree.weight}
-          occasions={saree.occasions}
+        </div>        
+        <div className="fade-up fade-delay-2">
+          <SareePersonalization
+          reason={reason}
+          isPersonalized={isPersonalized}
+          drape={saree.drape}
+          archetypes={archetypes}
+          preferredKeys={preferred}
         />
-
-        <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-2">
-          <p className="font-sans text-xs text-gray-600">
-            Priced to honour craftsmanship and fair work
-          </p>
-          <p className="font-serif text-2xl text-gray-900">
-            ₹{saree.price.toLocaleString("en-IN")}
-          </p>
-        </section>
-
-        {/* Stock & availability guard */}
-        {!saree.isActive ? (
-          <p className="text-sm text-gray-600 italic text-center">
-            This saree is currently unavailable.
-          </p>
-        ) : saree.stock === 0 ? (
-          <p className="text-sm text-gray-600 italic text-center">
-            Currently out of stock.
-          </p>
-        ) : (
-            <button
-              disabled={adding}
-              onClick={() => {
-                setAdding(true);
-
-                sessionStorage.setItem(
-                  "gw_checkout_saree",
-                  JSON.stringify({
-                    slug: saree.slug,
-                    name: saree.name,
-                    price: saree.price,
-                  })
-                );
-
-                setTimeout(() => {
-                  window.location.href = "/checkout";
-                }, 400);
-              }}
-              className={`w-full rounded-full border py-4 font-sans text-sm transition-all
-                ${adding
-                  ? "bg-gray-900 text-white cursor-wait"
-                  : "border-gray-900 hover:bg-gray-900 hover:text-white"
-                }`}
-            >
-              {adding ? "Reserving this saree…" : "Add to My Collection"}
-            </button>
-        )}
-        <CareNote />
-        <PackagingNote />
-        <TrustSection />
+        </div>      
+        <div className="fade-up fade-delay-3">
+          <SareeDetails {...saree} />
+        </div>    
+        <div className="fade-up fade-delay-3">
+          <SareePurchase saree={saree} />
+        </div>
+        <div className="fade-up fade-delay-4">
+          <CareNote />
+          <PackagingNote />
+          <TrustSection />
+        </div> 
       </article>
     </main>
   );

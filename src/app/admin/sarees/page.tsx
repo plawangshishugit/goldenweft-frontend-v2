@@ -27,9 +27,18 @@ export default async function AdminSareesPage() {
                 stock={Number.isFinite(s.stock) ? s.stock : 0}
                 isActive={Boolean(s.isActive)}
               />
+                        <a
+            href={`/admin/sarees/${s.id}/gallery`}
+            className="text-sm text-blue-600 underline"
+          >
+            Manage Gallery
+          </a>
             </div>
+            
           ))}
+
         </div>
+        
       </div>
     </main>
   );

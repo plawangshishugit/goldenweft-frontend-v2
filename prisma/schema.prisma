@@ -82,7 +82,7 @@ model SareeImage {
   id        String   @id @default(cuid())
   sareeId   String
   imageUrl  String
-  position  Int
+  position  Int      @default(0)
 
   saree     Saree    @relation(fields: [sareeId], references: [id], onDelete: Cascade)
 
